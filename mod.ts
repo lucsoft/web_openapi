@@ -62,7 +62,7 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
         info: {
             title: options?.title ?? "Example API",
             version: options?.version ?? "1.0.0",
-            license: typeof options.license === "number" ? LicenseMap[options.license] : options.license ?? LicenseMap[License.MIT]
+            license: typeof options.license === "number" ? LicenseMap[options.license] : options.license
         },
         paths: Object.fromEntries(getUniquePaths()
             .map(path => {
