@@ -1,4 +1,14 @@
-import { Routes, generateOpenAPISpec } from "./mod.ts";
+import { Components, Routes, generateOpenAPISpec } from "./mod.ts";
+
+Components.set("User", {
+    type: "object",
+    properties: {
+        id: { type: "string" },
+        name: { type: "string" },
+        email: { type: "string" },
+        age: { type: "number" },
+    }
+})
 
 Routes.get.add(new URLPattern({ pathname: "/users" }));
 Routes.get.add(new URLPattern({ pathname: "/users/:userId/posts/:postId/comments" }));

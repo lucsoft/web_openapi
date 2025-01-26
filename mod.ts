@@ -1,8 +1,10 @@
-import { OpenAPI3, PathItemObject, OperationObject, LicenseObject, ServerObject } from "npm:openapi-typescript@6.7.5";
+import { OpenAPI3, PathItemObject, OperationObject, LicenseObject, ServerObject, SchemaObject } from "npm:openapi-typescript@6.7.5";
 import { sortBy } from "https://deno.land/std@0.221.0/collections/mod.ts";
 import { pascalCase } from "https://deno.land/x/case@2.2.0/mod.ts";
 
 export const Metadata = new Map<URLPattern, OperationObject>();
+
+export const Components = new Map<string, SchemaObject>();
 
 export const Routes = {
     get: new Set<URLPattern>(),
@@ -59,6 +61,9 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
                 ...item
             }))
         ],
+        components: {
+            schemas: Object.fromEntries(Components)
+        },
         info: {
             title: options?.title ?? "Example API",
             version: options?.version ?? "1.0.0",
