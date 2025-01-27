@@ -135,8 +135,7 @@ function pathToString(path: string) {
     .split("/")
     .filter(x => x) // remove empty strings
     .reverse()
-    .filter((item, _, list) => list[0].startsWith(':') ? item.startsWith(':') : true)
-    .filter((item, index) => index > 1 ? item.startsWith(':') : true)
+    .filter((_, index, arr) => arr.some(x => x.startsWith("@")) ? index <= arr.findIndex(x => x.startsWith("@")) : true)
     .map(name => name.startsWith(":") ? name.replace("Id", "") : name)
     .map(name => pascalCase(name))
     .join("By");
