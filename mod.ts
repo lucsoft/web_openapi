@@ -38,12 +38,12 @@ export enum License {
 }
 
 export const LicenseMap = {
-    [License.MIT]: {
+    [ License.MIT ]: {
         identifier: "MIT",
         name: "MIT License",
         url: "https://opensource.org/licenses/MIT"
     },
-    [License.Apache2]: {
+    [ License.Apache2 ]: {
         identifier: "Apache-2.0",
         name: "Apache License 2.0",
         url: "https://www.apache.org/licenses/LICENSE-2.0"
@@ -54,7 +54,7 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
     return <OpenAPI3>{
         openapi: "3.1.0",
         servers: [
-            ...(options.servers ?? [ {}]).map(item => ({
+            ...(options.servers ?? [ {} ]).map(item => ({
                 url: "https://example.one/api",
                 description: "Example server",
                 variables: {},
@@ -67,7 +67,7 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
         info: {
             title: options?.title ?? "Example API",
             version: options?.version ?? "1.0.0",
-            license: typeof options.license === "number" ? LicenseMap[options.license] : options.license
+            license: typeof options.license === "number" ? LicenseMap[ options.license ] : options.license
         },
         paths: Object.fromEntries(getUniquePaths()
             .map(path => {
@@ -131,14 +131,14 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
 }
 
 function pathToString(path: string) {
-  return path
-    .split("/")
-    .filter(x => x) // remove empty strings
-    .reverse()
-    .filter((_, index, arr) => arr.some(x => x.startsWith("@")) ? index <= arr.findIndex(x => x.startsWith("@")) : true)
-    .map(name => name.startsWith(":") ? name.replace("Id", "") : name)
-    .map(name => pascalCase(name))
-    .join("By");
+    return path
+        .split("/")
+        .filter(x => x) // remove empty strings
+        .reverse()
+        .filter((_, index, arr) => arr.some(x => x.startsWith("@")) ? index <= arr.findIndex(x => x.startsWith("@")) : true)
+        .map(name => name.startsWith(":") ? name.replace("Id", "") : name)
+        .map(name => pascalCase(name))
+        .join("By");
 }
 
 function hasInSet(set: Set<URLPattern>, url: URLPattern) {
