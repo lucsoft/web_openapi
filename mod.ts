@@ -62,7 +62,14 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
             }))
         ],
         components: {
-            schemas: Object.fromEntries(Components)
+            schemas: Object.fromEntries(Components),
+            securitySchemes: {
+                "jwtAuth": { 
+                    type: "http",
+                    scheme: "bearer",
+                    bearerFormat: "JWT"
+                }
+            }
         },
         info: {
             title: options?.title ?? "Example API",
