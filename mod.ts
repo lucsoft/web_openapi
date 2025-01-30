@@ -1,4 +1,4 @@
-import { OpenAPI3, PathItemObject, OperationObject, LicenseObject, ServerObject, SchemaObject } from "npm:openapi-typescript@6.7.5";
+import { OpenAPI3, PathItemObject, OperationObject, LicenseObject, ServerObject, SchemaObject, SecuritySchemeObject } from "npm:openapi-typescript@6.7.5";
 import { sortBy } from "https://deno.land/std@0.221.0/collections/mod.ts";
 import { pascalCase } from "https://deno.land/x/case@2.2.0/mod.ts";
 
@@ -38,23 +38,23 @@ export enum License {
 }
 
 export const LicenseMap = {
-    [License.MIT]: {
+    [ License.MIT ]: {
         identifier: "MIT",
         name: "MIT License",
         url: "https://opensource.org/licenses/MIT"
     },
-    [License.Apache2]: {
+    [ License.Apache2 ]: {
         identifier: "Apache-2.0",
         name: "Apache License 2.0",
         url: "https://www.apache.org/licenses/LICENSE-2.0"
     }
 }
 
-export function generateOpenAPISpec(options: { title?: string, version?: string, license?: License | LicenseObject, servers?: Partial<ServerObject>[] } = {}) {
+export function generateOpenAPISpec(options: { title?: string, version?: string, license?: License | LicenseObject, servers?: Partial<ServerObject>[], securitySchemas?: Record<string, SecuritySchemeObject> } = {}) {
     return <OpenAPI3>{
         openapi: "3.1.0",
         servers: [
-            ...(options.servers ?? [ {}]).map(item => ({
+            ...(options.servers ?? [ {} ]).map(item => ({
                 url: "https://example.one/api",
                 description: "Example server",
                 variables: {},
@@ -62,12 +62,19 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
             }))
         ],
         components: {
-            schemas: Object.fromEntries(Components)
+            schemas: Object.fromEntries(Components),
+            securitySchemes: options.securitySchemas ?? {
+                "bearerAuth": {
+                    type: "http",
+                    scheme: "bearer",
+                    bearer: "JWT"
+                }
+            }
         },
         info: {
             title: options?.title ?? "Example API",
             version: options?.version ?? "1.0.0",
-            license: typeof options.license === "number" ? LicenseMap[options.license] : options.license
+            license: typeof options.license === "number" ? LicenseMap[ options.license ] : options.license
         },
         paths: Object.fromEntries(getUniquePaths()
             .map(path => {
@@ -124,22 +131,21 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
                     };
                 }
 
-                return [ path, obj ];
+                return [ path.split("/").map(segment => segment.startsWith(":") ? `{${segment.slice(1)}}` : segment).join("/"), obj ];
             })
         )
     };
 }
 
 function pathToString(path: string) {
-  return path
-    .split("/")
-    .filter(x => x) // remove empty strings
-    .reverse()
-    .filter((item, _, list) => list[0].startsWith(':') ? item.startsWith(':') : true)
-    .filter((item, index) => index > 1 ? item.startsWith(':') : true)
-    .map(name => name.startsWith(":") ? name.replace("Id", "") : name)
-    .map(name => pascalCase(name))
-    .join("By");
+    return path
+        .split("/")
+        .filter(x => x) // remove empty strings
+        .reverse()
+        .filter((_, index, arr) => arr.some(x => x.startsWith("@")) ? index < arr.findIndex(x => x.startsWith("@")) : true)
+        .map(name => name.startsWith(":") ? name.replace("Id", "") : name)
+        .map(name => pascalCase(name))
+        .join("By");
 }
 
 function hasInSet(set: Set<URLPattern>, url: URLPattern) {
