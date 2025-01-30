@@ -50,15 +50,7 @@ export const LicenseMap = {
     }
 }
 
-export function generateOpenAPISpec(options: { title?: string, version?: string, license?: License | LicenseObject, servers?: Partial<ServerObject>[], securitySchemas: Record<string, SecuritySchemeObject> } = {
-    securitySchemas: {
-        "bearerAuth": {
-            type: "http",
-            scheme: "bearer",
-            bearer: "JWT"
-        }
-    }
-}) {
+export function generateOpenAPISpec(options: { title?: string, version?: string, license?: License | LicenseObject, servers?: Partial<ServerObject>[], securitySchemas?: Record<string, SecuritySchemeObject> } = {}) {
     return <OpenAPI3>{
         openapi: "3.1.0",
         servers: [
@@ -71,7 +63,13 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
         ],
         components: {
             schemas: Object.fromEntries(Components),
-            securitySchemes: options.securitySchemas
+            securitySchemes: options.securitySchemas ?? {
+                "bearerAuth": {
+                    type: "http",
+                    scheme: "bearer",
+                    bearer: "JWT"
+                }
+            }
         },
         info: {
             title: options?.title ?? "Example API",
