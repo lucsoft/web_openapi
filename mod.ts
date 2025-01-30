@@ -131,7 +131,7 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
                     };
                 }
 
-                return [ path, obj ];
+                return [ path.split("/").map(segment => segment.startsWith(":") ? `{${segment.slice(1)}}` : segment).join("/"), obj ];
             })
         )
     };
