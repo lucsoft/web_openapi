@@ -1,4 +1,4 @@
-import { OpenAPI3, PathItemObject, OperationObject, LicenseObject, ServerObject, SchemaObject } from "npm:openapi-typescript@6.7.5";
+import { OpenAPI3, PathItemObject, OperationObject, LicenseObject, ServerObject, SchemaObject, SecuritySchemeObject } from "npm:openapi-typescript@6.7.5";
 import { sortBy } from "https://deno.land/std@0.221.0/collections/mod.ts";
 import { pascalCase } from "https://deno.land/x/case@2.2.0/mod.ts";
 
@@ -50,7 +50,15 @@ export const LicenseMap = {
     }
 }
 
-export function generateOpenAPISpec(options: { title?: string, version?: string, license?: License | LicenseObject, servers?: Partial<ServerObject>[] } = {}) {
+export function generateOpenAPISpec(options: { title?: string, version?: string, license?: License | LicenseObject, servers?: Partial<ServerObject>[], securitySchemas: Record<string, SecuritySchemeObject> } = {
+    securitySchemas: {
+        "bearerAuth": {
+            type: "http",
+            scheme: "bearer",
+            bearer: "JWT"
+        }
+    }
+}) {
     return <OpenAPI3>{
         openapi: "3.1.0",
         servers: [
@@ -63,13 +71,7 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
         ],
         components: {
             schemas: Object.fromEntries(Components),
-            securitySchemes: {
-                "bearerAuth": { 
-                    type: "http",
-                    scheme: "bearer",
-                    bearerFormat: "JWT"
-                }
-            }
+            securitySchemes: options.securitySchemas
         },
         info: {
             title: options?.title ?? "Example API",
