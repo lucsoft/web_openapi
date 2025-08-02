@@ -1,5 +1,5 @@
-import { OpenAPI3, PathItemObject, OperationObject, LicenseObject, ServerObject, SchemaObject, SecuritySchemeObject } from "npm:openapi-typescript@6.7.5";
-import { sortBy } from "https://deno.land/std@0.221.0/collections/mod.ts";
+import { OpenAPI3, PathItemObject, OperationObject, LicenseObject, ServerObject, SchemaObject, SecuritySchemeObject } from "npm:openapi-typescript@7.8.0";
+import { sortBy } from "jsr:@std/collections@1.1.2";
 import { pascalCase } from "https://deno.land/x/case@2.2.0/mod.ts";
 
 export const Metadata = new Map<URLPattern, OperationObject>();
@@ -19,9 +19,7 @@ export function getPathSorted() {
         .map(it => Array.from(it.values()))
         .flat();
 
-    const sorted = sortBy(list, it => it.pathname);
-
-    return sorted;
+    return sortBy(list, it => it.pathname);
 }
 
 export function getUniquePaths() {
@@ -67,7 +65,7 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
                 "bearerAuth": {
                     type: "http",
                     scheme: "bearer",
-                    bearer: "JWT"
+                    bearerFormat: "JWT"
                 }
             }
         },
@@ -88,7 +86,7 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
 
                 if (getPattern) {
                     obj.get = {
-                        operationId: "get" + pathToString(path),
+                        operationId: `get${pathToString(path)}`,
                         responses: {},
                         security: [],
                         ...Metadata.get(getPattern)
@@ -97,7 +95,7 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
 
                 if (putPattern) {
                     obj.put = {
-                        operationId: "put" + pathToString(path),
+                        operationId: `put${pathToString(path)}`,
                         responses: {},
                         security: [],
                         ...Metadata.get(putPattern)
@@ -106,7 +104,7 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
 
                 if (postPattern) {
                     obj.post = {
-                        operationId: "post" + pathToString(path),
+                        operationId: `post${pathToString(path)}`,
                         responses: {},
                         security: [],
                         ...Metadata.get(postPattern)
@@ -115,7 +113,7 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
 
                 if (deletePattern) {
                     obj.delete = {
-                        operationId: "delete" + pathToString(path),
+                        operationId: `delete${pathToString(path)}`,
                         responses: {},
                         security: [],
                         ...Metadata.get(deletePattern)
@@ -124,7 +122,7 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
 
                 if (patchPattern) {
                     obj.patch = {
-                        operationId: "patch" + pathToString(path),
+                        operationId: `patch${pathToString(path)}`,
                         responses: {},
                         security: [],
                         ...Metadata.get(patchPattern)
