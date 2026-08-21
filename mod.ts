@@ -1,6 +1,6 @@
-import { OpenAPI3, PathItemObject, OperationObject, LicenseObject, ServerObject, SchemaObject, SecuritySchemeObject } from "npm:openapi-typescript@7.8.0";
-import { sortBy } from "jsr:@std/collections@1.1.2";
-import { pascalCase } from "https://deno.land/x/case@2.2.0/mod.ts";
+// deno-lint-ignore-file no-import-prefix
+import { toPascalCase } from "jsr:@std/text@1.0.19";
+import type { OpenAPI3, PathItemObject, OperationObject, ServerObject, SchemaObject } from "npm:openapi-typescript@7.13.0";
 
 export const Metadata = new Map<URLPattern, OperationObject>();
 
@@ -12,146 +12,46 @@ export const Routes = {
     post: new Set<URLPattern>(),
     delete: new Set<URLPattern>(),
     patch: new Set<URLPattern>(),
+    head: new Set<URLPattern>(),
 }
 
-export function getPathSorted() {
-    const list = Object.values(Routes)
-        .map(it => Array.from(it.values()))
-        .flat();
+export function generateOpenAPISpec(options: { title?: string, version?: string, servers?: ServerObject[] } = {}) {
+    const paths = new Map<string, PathItemObject>();
 
-    return sortBy(list, it => it.pathname);
-}
-
-export function getUniquePaths() {
-    const list = getPathSorted();
-
-    const unique = new Set(list.map(it => it.pathname));
-
-    return Array.from(unique.values());
-}
-
-export enum License {
-    MIT,
-    Apache2,
-}
-
-export const LicenseMap = {
-    [ License.MIT ]: {
-        identifier: "MIT",
-        name: "MIT License",
-        url: "https://opensource.org/licenses/MIT"
-    },
-    [ License.Apache2 ]: {
-        identifier: "Apache-2.0",
-        name: "Apache License 2.0",
-        url: "https://www.apache.org/licenses/LICENSE-2.0"
-    }
-}
-
-export function generateOpenAPISpec(options: { title?: string, version?: string, license?: License | LicenseObject, servers?: Partial<ServerObject>[], securitySchemas?: Record<string, SecuritySchemeObject> } = {}) {
-    return <OpenAPI3>{
-        openapi: "3.1.0",
-        servers: [
-            ...(options.servers ?? [ {} ]).map(item => ({
-                url: "https://example.one/api",
-                description: "Example server",
-                variables: {},
-                ...item
-            }))
-        ],
-        components: {
-            schemas: Object.fromEntries(Components),
-            securitySchemes: options.securitySchemas ?? {
-                "bearerAuth": {
-                    type: "http",
-                    scheme: "bearer",
-                    bearerFormat: "JWT"
-                }
-            }
-        },
-        info: {
-            title: options?.title ?? "Example API",
-            version: options?.version ?? "1.0.0",
-            license: typeof options.license === "number" ? LicenseMap[ options.license ] : options.license
-        },
-        paths: Object.fromEntries(getUniquePaths()
-            .map(path => {
-                const obj: PathItemObject = {};
-                const pattern = new URLPattern({ pathname: path });
-                const getPattern = hasInSet(Routes.get, pattern);
-                const putPattern = hasInSet(Routes.put, pattern);
-                const postPattern = hasInSet(Routes.post, pattern);
-                const deletePattern = hasInSet(Routes.delete, pattern);
-                const patchPattern = hasInSet(Routes.patch, pattern);
-
-                if (getPattern) {
-                    obj.get = {
-                        operationId: `get${pathToString(path)}`,
-                        responses: {},
-                        security: [],
-                        ...Metadata.get(getPattern)
-                    };
-                }
-
-                if (putPattern) {
-                    obj.put = {
-                        operationId: `put${pathToString(path)}`,
-                        responses: {},
-                        security: [],
-                        ...Metadata.get(putPattern)
-                    };
-                }
-
-                if (postPattern) {
-                    obj.post = {
-                        operationId: `post${pathToString(path)}`,
-                        responses: {},
-                        security: [],
-                        ...Metadata.get(postPattern)
-                    };
-                }
-
-                if (deletePattern) {
-                    obj.delete = {
-                        operationId: `delete${pathToString(path)}`,
-                        responses: {},
-                        security: [],
-                        ...Metadata.get(deletePattern)
-                    };
-                }
-
-                if (patchPattern) {
-                    obj.patch = {
-                        operationId: `patch${pathToString(path)}`,
-                        responses: {},
-                        security: [],
-                        ...Metadata.get(patchPattern)
-                    };
-                }
-
-                return [ path.split("/").map(segment => segment.startsWith(":") ? `{${segment.slice(1)}}` : segment).join("/"), obj ];
-            })
-        )
-    };
-}
-
-function pathToString(path: string) {
-    return path
-        .split("/")
-        .filter(x => x) // remove empty strings
-        .reverse()
-        .filter((_, index, arr) => arr.some(x => x.startsWith("@")) ? index < arr.findIndex(x => x.startsWith("@")) : true)
-        .map(name => name.startsWith(":") ? name.replace("Id", "") : name)
-        .map(name => pascalCase(name))
-        .join("By");
-}
-
-function hasInSet(set: Set<URLPattern>, url: URLPattern) {
-    for (const item of set) {
-        if (item.pathname === url.pathname) {
-            return item;
+    for (const [ method, patterns ] of Object.entries(Routes) as [ keyof typeof Routes, Set<URLPattern> ][]) {
+        for (const pattern of patterns) {
+            const item = paths.get(pattern.pathname) ?? {};
+            item[ method ] ??= {
+                operationId: `${method}${pathToString(pattern.pathname)}`,
+                ...Metadata.get(pattern)
+            };
+            paths.set(pattern.pathname, item);
         }
     }
 
-    return undefined;
+    return {
+        openapi: "3.1.0",
+        servers: options.servers,
+        components: {
+            schemas: Object.fromEntries(Components),
+            securitySchemes: { bearerAuth: { type: "http", scheme: "bearer" } }
+        },
+        info: {
+            title: options.title ?? "Example API",
+            version: options.version ?? "1.0.0"
+        },
+        paths: Object.fromEntries([ ...paths ]
+            .toSorted(([ a ], [ b ]) => a < b ? -1 : a > b ? 1 : 0)
+            .map(([ path, item ]) => [ path.replaceAll(/\/:([^/]*)/g, "/{$1}"), item ]))
+    } satisfies OpenAPI3;
+}
+
+function pathToString(path: string) {
+    const segments = path.split("/").filter(Boolean);
+
+    return segments
+        .slice(segments.findLastIndex(it => it.startsWith("@")) + 1)
+        .toReversed()
+        .map(name => toPascalCase(name.startsWith(":") ? name.replace(/Id$/, "") : name))
+        .join("By");
 }
