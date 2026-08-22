@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-import-prefix
 import { toPascalCase } from "jsr:@std/text@1.0.19";
-import type { OpenAPI3, PathItemObject, OperationObject, ServerObject, SchemaObject } from "npm:openapi-typescript@7.13.0";
+import type { OpenAPI3, PathItemObject, OperationObject, ServerObject, SchemaObject, SecuritySchemeObject } from "npm:openapi-typescript@7.13.0";
 
 export const Metadata = new Map<URLPattern, OperationObject>();
 
@@ -34,7 +34,8 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
         servers: options.servers,
         components: {
             schemas: Object.fromEntries(Components),
-            securitySchemes: { bearerAuth: { type: "http", scheme: "bearer" } }
+            // openapi-typescript types this field as `bearer`; the spec name is `bearerFormat`, the cast keeps it
+            securitySchemes: { bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" } as SecuritySchemeObject }
         },
         info: {
             title: options.title ?? "Example API",
