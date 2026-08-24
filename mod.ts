@@ -42,7 +42,7 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
             version: options.version ?? "1.0.0"
         },
         paths: Object.fromEntries([ ...paths ]
-            .toSorted(([ a ], [ b ]) => a < b ? -1 : a > b ? 1 : 0)
+            .sort(([ a ], [ b ]) => a < b ? -1 : a > b ? 1 : 0)
             .map(([ path, item ]) => [ path.replaceAll(/\/:([^/]*)/g, "/{$1}"), item ]))
     } satisfies OpenAPI3;
 }
@@ -52,7 +52,8 @@ function pathToString(path: string) {
 
     return segments
         .slice(segments.findLastIndex(it => it.startsWith("@")) + 1)
-        .toReversed()
-        .map(name => toPascalCase(name.startsWith(":") ? name.replace(/Id$/, "") : name))
+        .reverse()
+        .map(name => name.startsWith(":") ? name.replace(/Id$/, "") : name)
+        .map(toPascalCase)
         .join("By");
 }
