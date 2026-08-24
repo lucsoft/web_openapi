@@ -1,4 +1,5 @@
 // deno-lint-ignore-file no-import-prefix
+import { sortBy } from "jsr:@std/collections@1.3.0";
 import { toPascalCase } from "jsr:@std/text@1.0.19";
 import type { OpenAPI3, PathItemObject, OperationObject, ServerObject, SchemaObject, SecuritySchemeObject } from "npm:openapi-typescript@7.13.0";
 
@@ -41,8 +42,7 @@ export function generateOpenAPISpec(options: { title?: string, version?: string,
             title: options.title ?? "Example API",
             version: options.version ?? "1.0.0"
         },
-        paths: Object.fromEntries([ ...paths ]
-            .sort(([ a ], [ b ]) => a < b ? -1 : a > b ? 1 : 0)
+        paths: Object.fromEntries(sortBy(paths, ([ path ]) => path)
             .map(([ path, item ]) => [ path.replaceAll(/\/:([^/]*)/g, "/{$1}"), item ]))
     } satisfies OpenAPI3;
 }
